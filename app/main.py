@@ -17,7 +17,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-
 DATA_PATH = "data/processed/priorites_prefectures.csv"
 PREFECTURES_PATH = "data/processed/prefectures_adm2.geojson"
 
@@ -62,6 +61,14 @@ st.markdown(
             border-left: 5px solid #f0ad4e;
             margin-top: 15px;
         }
+
+        .analysis-box {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            border-left: 5px solid #2c7fb8;
+            margin-bottom: 15px;
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -77,7 +84,6 @@ def charger_donnees():
     """Charge les indicateurs territoriaux."""
     df = pd.read_csv(DATA_PATH)
 
-    # Sécurité : convertir les colonnes numériques
     colonnes_numeriques = [
         "population_worldpop",
         "superficie_km2",
@@ -104,7 +110,7 @@ def charger_donnees():
         if colonne in df.columns:
             df[colonne] = pd.to_numeric(
                 df[colonne],
-                errors="coerce"
+                errors="coerce",
             ).fillna(0)
 
     return df
@@ -118,7 +124,6 @@ def charger_prefectures():
     if gdf.crs is None:
         gdf = gdf.set_crs("EPSG:4326")
 
-    # Le GeoJSON utilise shapeName comme nom de préfecture
     gdf = gdf.rename(
         columns={"shapeName": "prefecture"}
     )
@@ -219,22 +224,20 @@ niveaux_selectionnes = st.sidebar.multiselect(
 )
 
 df_filtre = df[
-    df["niveau_priorite"].astype(str).isin(
-        niveaux_selectionnes
-    )
+    df["niveau_priorite"]
+    .astype(str)
+    .isin(niveaux_selectionnes)
 ].copy()
 
 
 st.sidebar.markdown("---")
 
 st.sidebar.caption(
-    "📌 Les indicateurs de population sont issus de WorldPop 2020."
+    "📌 Population : WorldPop 2020."
 )
 
 st.sidebar.caption(
-    "📌 Les antennes proviennent d'OpenCelliD, une source "
-    "collaborative. Elles constituent donc un proxy de "
-    "l'infrastructure observée."
+    "📌 Antennes : OpenCelliD, source collaborative."
 )
 
 
@@ -278,7 +281,7 @@ st.divider()
 
 
 # ============================================================
-# CLASSEMENT DES PRIORITÉS
+# CLASSEMENT
 # ============================================================
 
 st.markdown(
@@ -371,14 +374,12 @@ st.markdown(
 
 st.markdown(
     """
-    La carte permet d'identifier visuellement les préfectures
-    présentant le plus fort niveau de priorité selon notre score
-    territorial.
+    La carte permet d'identifier les préfectures présentant le plus
+    fort niveau de priorité selon le score territorial.
     """
 )
 
 
-# Création de la carte
 m = folium.Map(
     location=[8.6, 1.2],
     zoom_start=7,
@@ -386,7 +387,6 @@ m = folium.Map(
 )
 
 
-# Fonction de couleur
 def couleur_priorite(niveau):
     if niveau == "Forte":
         return "#d73027"
@@ -394,28 +394,22 @@ def couleur_priorite(niveau):
         return "#fc8d59"
     elif niveau == "Faible":
         return "#91cf60"
+
     return "#cccccc"
 
 
-# Ajout des préfectures
 for _, row in df_carte.iterrows():
 
     niveau = row["niveau_priorite"]
 
-    population_row = row["population_worldpop"]
-    agents_row = row["agents_mobile_money"]
-    antennes_row = row["antennes_opencellid"]
-    score_row = row["score_priorite"]
-
     popup_html = f"""
     <div style="width: 260px;">
         <h4>{row['prefecture']}</h4>
-
         <b>Niveau :</b> {niveau}<br>
-        <b>Score de priorité :</b> {score_row:.3f}<br>
-        <b>Population :</b> {population_row:,.0f}<br>
-        <b>Agents Mobile Money :</b> {agents_row:,.0f}<br>
-        <b>Antennes recensées :</b> {antennes_row:,.0f}
+        <b>Score :</b> {row['score_priorite']:.3f}<br>
+        <b>Population :</b> {row['population_worldpop']:,.0f}<br>
+        <b>Agents Mobile Money :</b> {row['agents_mobile_money']:,.0f}<br>
+        <b>Antennes recensées :</b> {row['antennes_opencellid']:,.0f}
     </div>
     """
 
@@ -448,69 +442,99 @@ st_folium(
 )
 
 
-# ============================================================
-# LÉGENDE
-# ============================================================
-
 st.markdown(
     """
     **Légende :**
 
-    🔴 **Forte priorité** — territoire nécessitant une attention
-    prioritaire.
+    🔴 **Forte priorité**
 
-    🟠 **Priorité moyenne** — territoire présentant un besoin
-    intermédiaire.
+    🟠 **Priorité moyenne**
 
-    🟢 **Faible priorité** — territoire relativement mieux doté
-    selon les indicateurs utilisés.
+    🟢 **Faible priorité**
     """
 )
 
 
 # ============================================================
-# CONCLUSIONS
+# ANALYSE DÉTAILLÉE D'UNE PRÉFECTURE
 # ============================================================
 
 st.divider()
 
 st.markdown(
-    '<div class="section-title">🎯 Conclusions et recommandations</div>',
+    '<div class="section-title">🔎 Analyse détaillée d’une préfecture</div>',
     unsafe_allow_html=True,
 )
 
-
-# Préfecture n°1
-top1 = (
-    df.sort_values("rang_priorite")
-    .iloc[0]
+prefectures_disponibles = sorted(
+    df_filtre["prefecture"].unique()
 )
 
-nom_top1 = top1["prefecture"]
-pop_top1 = top1["population_worldpop"]
-mm_top1 = top1["agents_mobile_money"]
-mm_ratio_top1 = top1["agents_mm_pour_10000_hab"]
-antenne_top1 = top1["antennes_opencellid"]
-score_top1 = top1["score_priorite"]
+prefecture_selectionnee = st.selectbox(
+    "Sélectionnez une préfecture",
+    prefectures_disponibles,
+)
+
+territoire = df_filtre[
+    df_filtre["prefecture"] == prefecture_selectionnee
+].iloc[0]
+
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        "👥 Population",
+        f"{territoire['population_worldpop']:,.0f}",
+    )
+
+with col2:
+    st.metric(
+        "💰 Agents Mobile Money",
+        f"{territoire['agents_mobile_money']:,.0f}",
+    )
+
+with col3:
+    st.metric(
+        "📡 Antennes recensées",
+        f"{territoire['antennes_opencellid']:,.0f}",
+    )
+
+with col4:
+    st.metric(
+        "🎯 Score priorité",
+        f"{territoire['score_priorite']:.3f}",
+    )
 
 
 st.markdown(
     f"""
-    <div class="conclusion-box">
+    <div class="analysis-box">
 
-    <h4>1. Territoires à traiter en priorité</h4>
+    <h4>📌 Interprétation : {prefecture_selectionnee}</h4>
 
     <p>
-    <b>{nom_top1}</b> ressort comme la préfecture la plus prioritaire
-    selon le score construit. Elle combine une population importante
-    ({pop_top1:,.0f} habitants estimés), une faible disponibilité
-    relative des agents Mobile Money ({mm_ratio_top1:.2f} agents
-    pour 10 000 habitants) et aucune antenne OpenCelliD recensée
-    dans cette source.
+    <b>{prefecture_selectionnee}</b> est classée au rang
+    <b>{int(territoire['rang_priorite'])}</b> sur les
+    <b>{len(df)}</b> préfectures analysées.
+    Son niveau de priorité est :
+    <b>{territoire['niveau_priorite']}</b>.
     </p>
 
     <p>
-    Son score de priorité est de <b>{score_top1:.3f}</b>.
+    La population estimée est de
+    <b>{territoire['population_worldpop']:,.0f}</b> habitants.
+    Le territoire compte
+    <b>{territoire['agents_mobile_money']:,.0f}</b> agents Mobile Money,
+    soit environ
+    <b>{territoire['agents_mm_pour_10000_hab']:.2f}</b>
+    agents pour 10 000 habitants.
+    </p>
+
+    <p>
+    La source OpenCelliD recense
+    <b>{int(territoire['antennes_opencellid'])}</b>
+    antenne(s) dans cette préfecture.
     </p>
 
     </div>
@@ -519,7 +543,78 @@ st.markdown(
 )
 
 
-# Top 5
+# ============================================================
+# RECOMMANDATION AUTOMATIQUE
+# ============================================================
+
+score = territoire["score_priorite"]
+ratio_mm = territoire["agents_mm_pour_10000_hab"]
+antennes_territoire = territoire["antennes_opencellid"]
+population_territoire = territoire["population_worldpop"]
+
+
+if score >= 0.66:
+
+    recommandation = (
+        f"Le territoire de {prefecture_selectionnee} doit être "
+        "considéré comme une zone d'intervention prioritaire. "
+        "Il est recommandé d'étudier en priorité l'extension des "
+        "services numériques, le renforcement du réseau Mobile Money "
+        "et la disponibilité réelle des infrastructures mobiles."
+    )
+
+elif score >= 0.33:
+
+    recommandation = (
+        f"{prefecture_selectionnee} présente un niveau de priorité "
+        "intermédiaire. Une surveillance des besoins et un "
+        "renforcement ciblé des services numériques pourraient "
+        "être envisagés."
+    )
+
+else:
+
+    recommandation = (
+        f"{prefecture_selectionnee} présente un niveau de priorité "
+        "relativement faible selon les indicateurs utilisés. "
+        "Les investissements peuvent davantage être orientés vers "
+        "les territoires présentant un déficit plus important."
+    )
+
+
+st.markdown(
+    f"""
+    <div class="conclusion-box">
+
+    <h4>🎯 Recommandation pour {prefecture_selectionnee}</h4>
+
+    <p>
+    {recommandation}
+    </p>
+
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# ============================================================
+# CONCLUSIONS GÉNÉRALES
+# ============================================================
+
+st.divider()
+
+st.markdown(
+    '<div class="section-title">🎯 Conclusions générales</div>',
+    unsafe_allow_html=True,
+)
+
+
+top1 = (
+    df.sort_values("rang_priorite")
+    .iloc[0]
+)
+
 top5 = (
     df.sort_values("rang_priorite")
     .head(5)["prefecture"]
@@ -533,19 +628,17 @@ st.markdown(
     f"""
     <div class="conclusion-box">
 
-    <h4>2. Plusieurs territoires présentent un besoin significatif</h4>
+    <h4>1. Priorité territoriale</h4>
 
     <p>
-    Les cinq premières préfectures du classement sont :
-    <b>{top5_text}</b>.
+    <b>{top1['prefecture']}</b> arrive en première position du
+    classement avec un score de
+    <b>{top1['score_priorite']:.3f}</b>.
     </p>
 
     <p>
-    Cela montre que la stratégie de développement numérique ne doit
-    pas se limiter aux grands centres urbains. Les territoires
-    présentant simultanément une population significative et une
-    faible densité de services doivent être considérés dans la
-    planification des investissements.
+    Les cinq premières préfectures sont :
+    <b>{top5_text}</b>.
     </p>
 
     </div>
@@ -554,29 +647,29 @@ st.markdown(
 )
 
 
-# Mobile Money
 pref_mm_faible = (
     df.sort_values("agents_mm_pour_10000_hab")
     .iloc[0]
 )
 
+
 st.markdown(
     f"""
     <div class="conclusion-box">
 
-    <h4>3. Le Mobile Money constitue un levier important</h4>
+    <h4>2. Déficit relatif de Mobile Money</h4>
 
     <p>
-    La préfecture de <b>{pref_mm_faible['prefecture']}</b> présente
-    le plus faible ratio d'agents Mobile Money avec environ
-    <b>{pref_mm_faible['agents_mm_pour_10000_hab']:.2f}</b> agents
-    pour 10 000 habitants.
+    <b>{pref_mm_faible['prefecture']}</b> présente le plus faible
+    ratio d'agents Mobile Money, avec environ
+    <b>{pref_mm_faible['agents_mm_pour_10000_hab']:.2f}</b>
+    agents pour 10 000 habitants.
     </p>
 
     <p>
-    Une extension du réseau d'agents dans les territoires les moins
-    bien desservis pourrait améliorer l'accès aux services financiers
-    numériques et renforcer l'inclusion numérique.
+    Le renforcement de la couverture en agents peut constituer un
+    levier important pour améliorer l'accès aux services financiers
+    numériques dans les territoires moins bien desservis.
     </p>
 
     </div>
@@ -585,25 +678,21 @@ st.markdown(
 )
 
 
-# Concentration urbaine
 st.markdown(
     """
     <div class="conclusion-box">
 
-    <h4>4. Une forte concentration des infrastructures dans les zones urbaines</h4>
+    <h4>3. Concentration des services</h4>
 
     <p>
-    Les données montrent une concentration importante des agents
+    Les données montrent une forte concentration des agents
     Mobile Money et des agences télécom dans les principaux pôles
-    urbains, notamment autour de <b>Lome Commune</b> et du
-    <b>Golfe</b>.
+    urbains, notamment <b>Lome Commune</b> et <b>Golfe</b>.
     </p>
 
     <p>
-    Cette concentration peut traduire une meilleure disponibilité
-    des services dans les zones urbaines, mais elle met également
-    en évidence un potentiel de rattrapage dans plusieurs territoires
-    ruraux et périphériques.
+    Cette concentration souligne l'intérêt d'une stratégie de
+    rattrapage territorial visant les zones moins bien équipées.
     </p>
 
     </div>
@@ -612,29 +701,28 @@ st.markdown(
 )
 
 
-# Recommandation stratégique
 st.markdown(
     """
     <div class="conclusion-box">
 
-    <h4>5. Recommandation stratégique</h4>
+    <h4>4. Stratégie d'investissement recommandée</h4>
 
     <p>
-    Les investissements futurs devraient prioritairement cibler les
+    Les investissements devraient prioritairement cibler les
     territoires combinant :
     </p>
 
     <ul>
         <li>une population importante ;</li>
-        <li>une faible densité d'agents Mobile Money ;</li>
-        <li>une faible présence d'infrastructures mobiles recensées ;</li>
-        <li>et un score territorial de priorité élevé.</li>
+        <li>un faible nombre d'agents Mobile Money par habitant ;</li>
+        <li>une faible présence d'infrastructures recensées ;</li>
+        <li>un score de priorité élevé.</li>
     </ul>
 
     <p>
-    Cette approche permettrait de maximiser l'impact territorial des
-    investissements plutôt que de renforcer uniquement les zones
-    déjà relativement bien équipées.
+    Cette approche permettrait de concentrer les ressources sur les
+    territoires où l'amélioration de l'accès numérique pourrait avoir
+    le plus fort impact.
     </p>
 
     </div>
@@ -644,32 +732,37 @@ st.markdown(
 
 
 # ============================================================
-# AVERTISSEMENT MÉTHODOLOGIQUE
+# LIMITES MÉTHODOLOGIQUES
 # ============================================================
 
 st.markdown(
     """
     <div class="warning-box">
 
-    <h4>⚠️ Limite méthodologique importante</h4>
+    <h4>⚠️ Limites méthodologiques</h4>
 
     <p>
-    Le nombre d'antennes utilisé dans l'analyse provient d'OpenCelliD,
-    une base collaborative. L'absence d'une antenne dans les données
-    ne signifie donc pas nécessairement une absence réelle de
-    couverture mobile.
+    Les données de population proviennent de WorldPop 2020 et
+    constituent une estimation spatiale de la population.
     </p>
 
     <p>
-    Les résultats doivent être interprétés comme un <b>outil d'aide
-    à la décision et de priorisation territoriale</b>, et non comme
-    une mesure exhaustive de la couverture réseau réelle.
+    Les antennes proviennent d'OpenCelliD, une base collaborative.
+    Un nombre nul d'antennes recensées ne signifie donc pas
+    nécessairement une absence réelle de couverture mobile.
     </p>
 
     <p>
-    Une validation terrain ou un croisement avec les données
-    officielles des opérateurs permettrait de renforcer la fiabilité
-    du diagnostic.
+    Le score de priorité doit être considéré comme un
+    <b>outil d'aide à la décision</b> permettant de comparer les
+    territoires, et non comme une mesure absolue de la fracture
+    numérique.
+    </p>
+
+    <p>
+    Un croisement avec les données officielles des opérateurs et,
+    lorsque cela est possible, des données de couverture réseau
+    permettrait de renforcer le diagnostic.
     </p>
 
     </div>
@@ -685,6 +778,6 @@ st.markdown(
 st.divider()
 
 st.caption(
-    "Togo Digital Access — Analyse territoriale | "
+    "Togo Digital Access — Diagnostic territorial | "
     "Projet Économie numérique"
 )
