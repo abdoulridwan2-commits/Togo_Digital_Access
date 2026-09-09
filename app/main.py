@@ -140,6 +140,48 @@ st.markdown(
         border-left: 6px solid #f4b942;
     }
 
+    .hero-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(220px, 0.8fr);
+        gap: 2rem;
+        align-items: end;
+    }
+
+    .hero-eyebrow {
+        color: #f4b942;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 0.8rem;
+    }
+
+    .hero-side {
+        border-left: 1px solid rgba(216,243,240,0.35);
+        padding-left: 1.25rem;
+    }
+
+    .hero-side-label {
+        color: #b8e4df;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+    }
+
+    .hero-side-value {
+        color: #ffffff;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0.25rem 0 0.75rem;
+    }
+
+    .hero-side-note {
+        color: #d8f3f0;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
     .hero-title {
         font-size: 2.7rem;
         font-weight: 800;
@@ -386,6 +428,8 @@ st.markdown(
         .executive-summary { grid-template-columns: 1fr; }
         .hero-title { font-size: 2.1rem; }
         .hero { padding: 1.8rem 1.25rem; }
+        .hero-layout { grid-template-columns: 1fr; gap: 1.25rem; }
+        .hero-side { border-left: 0; border-top: 1px solid rgba(216,243,240,0.35); padding: 1rem 0 0; }
     }
 
     /* TABLE */
@@ -619,7 +663,7 @@ if "prefecture" not in df.columns:
 st.markdown(
     textwrap.dedent(
         """
-    <div class="hero"><div class="hero-title">📡 Togo Digital Access</div><div class="hero-subtitle">Diagnostic territorial de l'accès aux services numériques au Togo</div><div class="hero-badge">🇹🇬 Économie numérique&nbsp;&nbsp;·&nbsp;&nbsp;Analyse territoriale&nbsp;&nbsp;·&nbsp;&nbsp;Aide à la décision</div></div>
+    <div class="hero"><div class="hero-layout"><div><div class="hero-eyebrow">Togo AI Lab · Économie numérique · Défi 1</div><div class="hero-title">📡 Togo Digital Access</div><div class="hero-subtitle">Diagnostic territorial de l'accès aux services numériques au Togo</div><div class="hero-badge">🇹🇬 Analyse territoriale&nbsp;&nbsp;·&nbsp;&nbsp;Inclusion numérique&nbsp;&nbsp;·&nbsp;&nbsp;Aide à la décision</div></div><div class="hero-side"><div class="hero-side-label">Signal national</div><div class="hero-side-value">21 / 37</div><div class="hero-side-note">préfectures à examiner en priorité forte</div></div></div></div>
     """
     ).strip(),
     unsafe_allow_html=True,
