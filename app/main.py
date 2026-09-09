@@ -1021,6 +1021,13 @@ with tab2:
                 format_decimal(map_filtered["score_priorite"].mean(), 3),
             )
 
+        show_points = st.checkbox(
+            "Afficher les infrastructures et services ponctuels",
+            value=True,
+            help="Les points proviennent des sources ouvertes nettoyées. "
+            "OpenCelliD ne constitue pas un inventaire exhaustif.",
+        )
+
 
         m = folium.Map(
             location=[
@@ -1125,6 +1132,85 @@ with tab2:
             tooltip=tooltip,
         ).add_to(m)
 
+        if show_points:
+            point_layers = [
+                ("Agences Moov", "agences_moov.csv", "#0b7285", "Agence"),
+                ("Agences Togocom", "agences_togocom.csv", "#f4b942", "Agence"),
+                ("Datacenters", "datacenters.csv", "#7c3aed", "Datacenter"),
+            ]
+            for layer_name, filename, color, point_type in point_layers:
+                points_path = BASE_DIR / "data" / "processed" / filename
+                if not points_path.exists():
+                    continue
+                points_df = pd.read_csv(points_path)
+                if points_df.empty or "geometry" not in points_df.columns:
+                    continue
+                points = gpd.GeoDataFrame(
+                    points_df,
+                    geometry=gpd.GeoSeries.from_wkt(points_df["geometry"]),
+                    crs="EPSG:4326",
+                )
+                joined_points = gpd.sjoin(
+                    points,
+                    map_filtered[["prefecture", "geometry"]],
+                    how="inner",
+                    predicate="within",
+                )
+                feature_group = folium.FeatureGroup(name=layer_name)
+                for _, point in joined_points.iterrows():
+                    folium.CircleMarker(
+                        location=[point.geometry.y, point.geometry.x],
+                        radius=5,
+                        color=color,
+                        fill=True,
+                        fill_color=color,
+                        fill_opacity=0.85,
+                        tooltip=f"{point_type} · {point.get('prefecture', 'Territoire')}",
+                    ).add_to(feature_group)
+                feature_group.add_to(m)
+
+            cell_path = BASE_DIR / "data" / "processed" / "opencellid_615.csv"
+            if cell_path.exists():
+                cells = pd.read_csv(cell_path)
+                cell_group = folium.FeatureGroup(name="Antennes OpenCelliD")
+                for _, cell in cells.dropna(subset=["lat", "lon"]).iterrows():
+                    cell_point = gpd.GeoSeries.from_xy(
+                        [cell["lon"]], [cell["lat"]], crs="EPSG:4326"
+                    ).iloc[0]
+                    if not map_filtered.geometry.contains(cell_point).any():
+                        continue
+                    folium.CircleMarker(
+                        location=[cell["lat"], cell["lon"]],
+                        radius=4,
+                        color="#dc2626",
+                        fill=True,
+                        fill_color="#dc2626",
+                        fill_opacity=0.8,
+                        tooltip="Antenne observée · OpenCelliD",
+                    ).add_to(cell_group)
+                cell_group.add_to(m)
+
+            mobile_group = folium.FeatureGroup(name="Mobile Money par préfecture")
+            for _, territory in map_filtered.iterrows():
+                centroid = territory.geometry.representative_point()
+                agents = territory.get("agents_mobile_money", 0)
+                radius = max(5, min(18, 5 + agents / 250))
+                folium.CircleMarker(
+                    location=[centroid.y, centroid.x],
+                    radius=radius,
+                    color="#16a34a",
+                    fill=True,
+                    fill_color="#16a34a",
+                    fill_opacity=0.35,
+                    tooltip=(
+                        f"Mobile Money · {territory['prefecture']} · "
+                        f"{format_number(agents)} agents"
+                    ),
+                ).add_to(mobile_group)
+            mobile_group.add_to(m)
+
+            folium.LayerControl(collapsed=False).add_to(m)
+
 
         legend_html = """
         <div style="
@@ -1199,6 +1285,17 @@ with tab2:
             use_container_width=True,
             hide_index=True,
         )
+
+        zero_antenna = map_filtered[
+            map_filtered["antennes_opencellid"] == 0
+        ]["prefecture"].tolist()
+        if zero_antenna:
+            st.info(
+                "Zones sans antenne observée dans OpenCelliD : "
+                + ", ".join(zero_antenna)
+                + ". Cela signale une absence dans la donnée disponible, "
+                "pas nécessairement une absence réelle de couverture."
+            )
 
 
     else:

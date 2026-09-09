@@ -18,7 +18,7 @@ Le projet permet d'analyser :
 - la répartition des infrastructures et services numériques ;
 - les zones prioritaires pour améliorer l'accès numérique.
 
-Le dashboard propose également une **cartographie interactive** et un **score de priorité par préfecture**.
+Le dashboard propose également une **cartographie interactive** et un **score de priorité par préfecture**. La carte permet d'activer les couches des agences Moov et Togocom, des datacenters, des antennes OpenCelliD et du Mobile Money par préfecture, avec filtres, tableau détaillé et export CSV.
 
 ## 🎯 Réponse aux critères d'évaluation
 
@@ -59,6 +59,11 @@ Pour chaque préfecture, plusieurs indicateurs ont été calculés :
 - nombre d'agences télécom ;
 - nombre d'antennes mobiles recensées ;
 - nombre d'antennes pour 10 000 habitants.
+
+Les « zones blanches » sont opérationnellement repérées comme les préfectures
+où aucune antenne n'est observée dans OpenCelliD. Cette définition est
+volontairement prudente : OpenCelliD est collaboratif et incomplet ; ces zones
+doivent être confirmées par des données opérateurs ou des mesures terrain.
 
 Un **score de priorité** est ensuite calculé en combinant :
 
