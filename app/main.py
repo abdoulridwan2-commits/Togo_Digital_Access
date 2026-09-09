@@ -232,6 +232,32 @@ st.markdown(
         margin-top: 0.3rem;
     }
 
+    .map-guide {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin: 0.6rem 0 0.9rem;
+        color: #58708a;
+        font-size: 0.82rem;
+    }
+
+    .map-guide span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.55rem;
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 4px;
+    }
+
+    .map-guide i {
+        width: 0.7rem;
+        height: 0.7rem;
+        display: inline-block;
+        border-radius: 50%;
+    }
+
     @media (max-width: 800px) {
         .executive-summary { grid-template-columns: 1fr; }
         .hero-title { font-size: 2.1rem; }
@@ -940,8 +966,22 @@ with tab2:
 
     st.markdown(
         '<div class="section-description">'
-        "Visualisation territoriale du niveau de priorité."
+        "Priorité territoriale, infrastructures observées et accès aux services."
         "</div>",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="map-guide">
+            <span><i style="background:#dc2626"></i> Priorité forte</span>
+            <span><i style="background:#f4b942"></i> Priorité moyenne</span>
+            <span><i style="background:#16a34a"></i> Priorité faible</span>
+            <span><i style="background:#0b7285"></i> Agences</span>
+            <span><i style="background:#7c3aed"></i> Datacenters</span>
+            <span><i style="background:#dc2626"></i> Antennes observées</span>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
@@ -1215,27 +1255,25 @@ with tab2:
         legend_html = """
         <div style="
             position: fixed;
-            bottom: 35px;
-            left: 35px;
+            bottom: 24px;
+            left: 24px;
             z-index: 9999;
-            background: white;
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            font-size: 13px;
+            background: rgba(255,255,255,0.96);
+            padding: 13px 16px;
+            border-radius: 6px;
+            border: 1px solid #d9e2ec;
+            box-shadow: 0 6px 18px rgba(16,42,67,0.16);
+            font: 12px/1.7 Arial, sans-serif;
+            color: #102a43;
+            min-width: 168px;
         ">
-
-            <b>Priorité</b><br>
-
-            <span style="color:#ef4444;">●</span>
-            Forte<br>
-
-            <span style="color:#f59e0b;">●</span>
-            Moyenne<br>
-
-            <span style="color:#22c55e;">●</span>
-            Faible
-
+            <strong style="font-size:13px;">Lecture de la carte</strong><br>
+            <span style="color:#dc2626;">●</span> Priorité forte<br>
+            <span style="color:#f4b942;">●</span> Priorité moyenne<br>
+            <span style="color:#16a34a;">●</span> Priorité faible<br>
+            <span style="color:#0b7285;">●</span> Agences opérateurs<br>
+            <span style="color:#7c3aed;">●</span> Datacenters<br>
+            <span style="color:#16a34a;">◉</span> Mobile Money
         </div>
         """
 
