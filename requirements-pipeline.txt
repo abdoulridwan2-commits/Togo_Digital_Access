@@ -1,0 +1,3 @@
+-r requirements.txt
+rasterio==1.5.1
+rasterstats==0.21.0

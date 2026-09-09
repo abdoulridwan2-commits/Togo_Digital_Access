@@ -94,6 +94,12 @@ source .venv/bin/activate        # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+Pour exécuter également le pipeline géospatial complet :
+
+```bash
+pip install -r requirements-pipeline.txt
+```
+
 ### 3. Exécuter le pipeline de données puis lancer le dashboard
 
 ```bash
