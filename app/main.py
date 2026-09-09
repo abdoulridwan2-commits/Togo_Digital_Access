@@ -28,6 +28,36 @@ def render_markdown(body, *args, **kwargs):
 st.markdown = render_markdown
 
 
+_streamlit_plotly_chart = st.plotly_chart
+
+
+def render_plotly_chart(figure, *args, **kwargs):
+    """Applique le thème visuel du dashboard aux graphiques Plotly."""
+    if hasattr(figure, "update_layout"):
+        figure.update_layout(
+            font=dict(
+                family="Segoe UI, Helvetica Neue, sans-serif",
+                color="#102a43",
+            ),
+            title_font=dict(
+                family="Segoe UI, Helvetica Neue, sans-serif",
+                color="#102a43",
+                size=16,
+            ),
+            paper_bgcolor="#ffffff",
+            plot_bgcolor="#ffffff",
+            hoverlabel=dict(
+                bgcolor="#102a43",
+                font_color="#ffffff",
+            ),
+        )
+
+    return _streamlit_plotly_chart(figure, *args, **kwargs)
+
+
+st.plotly_chart = render_plotly_chart
+
+
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -65,10 +95,27 @@ st.markdown(
         color: #172033;
     }
 
+    [data-testid="stHeader"] {
+        background: rgba(244, 247, 251, 0.92);
+    }
+
+    [data-testid="stToolbar"] {
+        opacity: 0.72;
+    }
+
+    .stApp, .stApp p, .stApp label, .stApp button, .stApp input,
+    .stApp textarea, .stApp select {
+        font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+
     .main .block-container {
         max-width: 1380px;
         padding-top: 1.2rem;
         padding-bottom: 3rem;
+    }
+
+    div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stTabs"]) {
+        gap: 0.6rem;
     }
 
     /* HERO */
@@ -116,6 +163,10 @@ st.markdown(
         font-size: 0.9rem;
     }
 
+    .hero-badge::first-letter {
+        color: #f4b942;
+    }
+
     /* TITRES */
 
     .section-title {
@@ -129,6 +180,70 @@ st.markdown(
     .section-description {
         color: #58708a;
         margin-bottom: 1rem;
+        font-size: 0.96rem;
+    }
+
+    /* NAVIGATION */
+
+    button[data-baseweb="tab"] {
+        color: #58708a;
+        font-weight: 700;
+        border-bottom: 3px solid transparent;
+        padding: 0.8rem 1rem 0.7rem;
+    }
+
+    button[data-baseweb="tab"]:hover {
+        color: #0b7285;
+        background: #eef7f7;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #0b7285;
+        border-bottom-color: #f4b942;
+        background: #ffffff;
+    }
+
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 0.25rem;
+        border-bottom: 1px solid #d9e2ec;
+    }
+
+    /* CONTROLS */
+
+    div[data-baseweb="select"] > div {
+        background: #ffffff;
+        border-color: #c9d5e2;
+        border-radius: 5px;
+        min-height: 2.7rem;
+    }
+
+    div[data-baseweb="select"] > div:hover,
+    div[data-baseweb="select"] > div:focus-within {
+        border-color: #0b7285;
+        box-shadow: 0 0 0 2px rgba(11,114,133,0.12);
+    }
+
+    div[data-testid="stCheckbox"] {
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 5px;
+        padding: 0.55rem 0.75rem;
+    }
+
+    button[kind="secondary"], button[kind="primary"] {
+        border-radius: 5px;
+        font-weight: 700;
+        min-height: 2.5rem;
+    }
+
+    button[kind="primary"] {
+        background: #0b7285;
+        border-color: #0b7285;
+    }
+
+    button[kind="primary"]:hover {
+        background: #095c6b;
+        border-color: #095c6b;
     }
 
     /* KPI */
@@ -149,6 +264,11 @@ st.markdown(
     div[data-testid="stMetricValue"] {
         color: #102a43;
         font-weight: 800;
+        font-size: 1.7rem;
+    }
+
+    div[data-testid="stMetricDelta"] {
+        color: #0b7285;
     }
 
     /* CARDS */
@@ -196,9 +316,13 @@ st.markdown(
         background: #fef2f2;
         border-left: 5px solid #ef4444;
         padding: 1rem 1.2rem;
-        border-radius: 12px;
+        border-radius: 6px;
         margin-top: 1rem;
         color: #7f1d1d;
+    }
+
+    .warning-card, .success-card {
+        border-radius: 6px;
     }
 
     .executive-summary {
@@ -267,8 +391,29 @@ st.markdown(
     /* TABLE */
 
     [data-testid="stDataFrame"] {
-        border-radius: 15px;
+        border-radius: 6px;
         overflow: hidden;
+        border: 1px solid #d9e2ec;
+        box-shadow: 0 5px 18px rgba(16,42,67,0.05);
+    }
+
+    [data-testid="stPlotlyChart"] {
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 6px;
+        padding: 0.3rem;
+        box-shadow: 0 5px 18px rgba(16,42,67,0.04);
+    }
+
+    [data-testid="stAlert"] {
+        border-radius: 6px;
+        border-left-width: 4px;
+    }
+
+    details[data-testid="stExpander"] {
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 6px;
     }
 
     /* FOOTER */
